@@ -111,6 +111,8 @@ public class Gui extends Application {
     }
 
     private void showContextMenu(ContextMenuEvent event) {
+        treeView.setContextMenu(null);
+    
         TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
             ContextMenu contextMenu = new ContextMenu();
@@ -124,7 +126,7 @@ public class Gui extends Application {
             MenuItem deleteItem = new MenuItem("Eliminar");
             deleteItem.setOnAction(e -> deleteItem(selectedItem));
             contextMenu.getItems().add(deleteItem);
-
+            treeView.setContextMenu(contextMenu);
             contextMenu.show(treeView, event.getScreenX(), event.getScreenY());
         }
     }
