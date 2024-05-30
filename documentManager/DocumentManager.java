@@ -10,6 +10,10 @@ public class DocumentManager {
         _documents = new HashMap<>();
     }
 
+    public Map<Integer,Document> getDocuments() {
+        return _documents;
+    }
+
     public void addDocument(Document document) {
         _documents.put(document.getId(), document);
     }

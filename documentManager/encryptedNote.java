@@ -5,8 +5,8 @@ import exceptions.wrongPasswordException;
 public class EncryptedNote extends Note {
     private String _password;
 
-    public EncryptedNote(int id, String content, Document document, String password) {
-        super(id, content, document);
+    public EncryptedNote(int id,String title, String content, Document document, String password) {
+        super(id, title, content, document);
         this._password = password;
     }
 
