@@ -37,6 +37,13 @@ public class Gui extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Notes Manager");
         primaryStage.show();
+
+        leftPane.setOnMouseClicked(event -> {
+            if (treeView.getSelectionModel().getSelectedItem() != null) {
+                // Verifica se o clique foi fora da TreeView
+                treeView.getSelectionModel().clearSelection();
+            }
+        });
     }
 
     private VBox createHomepageButton() {
@@ -82,6 +89,7 @@ public class Gui extends Application {
     }
 
     private void showHomepage() {
+        treeView.getSelectionModel().clearSelection();
         textArea.setText("Bem-vindo ao Notes Manager! Selecione ou crie um documento para começar.");
         textArea.setDisable(true); // Disable editing in homepage view
     }
