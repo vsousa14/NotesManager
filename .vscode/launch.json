@@ -4,7 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "type": "java",
+            "name": "Gui",
+            "request": "launch",
+            "mainClass": "GUI.Gui",
+            "projectName": "NotesManager_5a50dee7"
+        },
         {
             "type": "java",
             "name": "RichTextEditor",
