@@ -76,7 +76,7 @@ public class Gui extends Application {
         dialog.setContentText("Nome:");
 
         dialog.showAndWait().ifPresent(name -> {
-            TreeItem<String> newDocument = new TreeItem<>(name);
+            TreeItem<String> newDocument = new TreeItem<>("[D] " + name);
             treeView.getRoot().getChildren().add(newDocument);
         });
     }
@@ -114,7 +114,7 @@ public class Gui extends Application {
         TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
             ContextMenu contextMenu = new ContextMenu();
-            if (selectedItem.getChildren().isEmpty()) {
+            if (selectedItem.getValue().contains("[D]")) {
                 MenuItem createNoteItem = new MenuItem("Criar Nota");
                 MenuItem createEncryptedNoteItem = new MenuItem("Criar Nota Criptografada");
                 createNoteItem.setOnAction(e -> createNoteForDocument(selectedItem));
@@ -136,7 +136,7 @@ public class Gui extends Application {
         dialog.setContentText("Nome:");
 
         dialog.showAndWait().ifPresent(name -> {
-            TreeItem<String> newNote = new TreeItem<>(name);
+            TreeItem<String> newNote = new TreeItem<>("[N] "+name);
             documentItem.getChildren().add(newNote);
             documentItem.setExpanded(true);
         });
@@ -157,7 +157,7 @@ public class Gui extends Application {
             noteNameDialog.setContentText("Nome:");
 
             noteNameDialog.showAndWait().ifPresent(name -> {
-                TreeItem<String> newNote = new TreeItem<>(name);
+                TreeItem<String> newNote = new TreeItem<>("[*N] "+name);
                 documentItem.getChildren().add(newNote);
                 documentItem.setExpanded(true);
                 // Store the password or use it accordingly
