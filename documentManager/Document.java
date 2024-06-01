@@ -30,4 +30,13 @@ public class Document {
     public void setContent(String content) {
         this._content = content;
     }
+
+    @Override
+    public String toString() {
+        return "Document{" +
+                "id=" + _id +
+                ", title='" + _title + '\'' +
+                ", content='" + _content + '\'' +
+                '}';
+    }
 }

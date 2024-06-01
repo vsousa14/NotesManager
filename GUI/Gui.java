@@ -34,6 +34,45 @@ public class Gui extends Application {
         textArea.setText("Bem-vindo ao Notes Manager! Selecione ou crie um documento para começar.");
         textArea.setDisable(true);  // Initially, disable the text area for homepage view
 
+        textArea.setOnKeyReleased(event -> {
+            TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+            System.out.println("ITEM SELECIONADO -> " + selectedItem);
+            if (selectedItem != null && selectedItem instanceof CustomTreeItem) {
+                CustomTreeItem<String> treeItem = (CustomTreeItem<String>) selectedItem;
+                Document parentDocument = treeItem.getDocument();
+                System.out.println(parentDocument);
+        
+                if (selectedItem.getValue().startsWith("[D]")) {
+                    // Se for um documento
+                    Document document = treeItem.getDocument();
+                    document.setContent(textArea.getText());
+                    treeItem.setDocument(document);
+                } else {
+                    // Se for uma nota ou nota criptografada
+                    String itemName = selectedItem.getValue();
+        
+                    if (itemName.startsWith("[N]")) {
+                        // Se for uma nota
+                        for (Note note : noteList) {
+                            
+                            if (note.getDocument().getId() == parentDocument.getId() && note.getTitle().equals(itemName.substring(4).trim())) {
+                                note.setContent(textArea.getText());
+                                break;
+                            }
+                        }
+                    } else if (itemName.startsWith("[*N]")) {
+                        // Se for uma nota criptografada
+                        for (EncryptedNote encryptedNote : encryptedNoteList) {
+                            if (encryptedNote.getDocument().getId() == parentDocument.getId() && encryptedNote.getTitle().equals(itemName.substring(5).trim())) {
+                                encryptedNote.setContent(textArea.getText());
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
         VBox rightPane = new VBox(toolBar, textArea);
         rightPane.setVgrow(textArea, Priority.ALWAYS);
 
@@ -112,96 +151,129 @@ public class Gui extends Application {
     private TreeView<String> createTreeView() {
         TreeItem<String> rootItem = new TreeItem<>("Notes Manager");
         rootItem.setExpanded(true);
-
+    
         TreeView<String> treeView = new TreeView<>(rootItem);
         treeView.setShowRoot(false);
-
+    
         treeView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && newValue.isLeaf()) {
-                // Handle note selection
-                textArea.setText("Conteúdo de " + newValue.getValue());
-                textArea.setDisable(false); // Enable editing when a note is selected
-            } else if (newValue != null) {
-                // Handle document selection
-                textArea.setText("Conteúdo de " + newValue.getValue());
-                textArea.setDisable(false); // Enable editing when a document is selected
+            if (newValue != null && newValue instanceof CustomTreeItem) {
+                CustomTreeItem<String> selectedItem = (CustomTreeItem<String>) newValue;
+                Document doc = selectedItem.getDocument();
+    
+                if (doc instanceof EncryptedNote) {
+                    handleEncryptedNoteSelection((EncryptedNote) doc);
+                } else if (doc instanceof Note) {
+                    // Handle regular note selection
+                    System.out.println("NOTA SELECIONADA");
+                    textArea.setText(doc.getContent());
+                    textArea.setDisable(false); // Enable editing when a note or document is selected
+                } else {
+                    // Handle document selection
+                    System.out.println("DOCUMENTO SELECIONADO");
+                    textArea.setText(doc.getContent());
+                    textArea.setDisable(false); // Enable editing when a note or document is selected
+                }
             }
         });
-
+    
         treeView.setOnContextMenuRequested(this::showContextMenu);
-
+    
         return treeView;
     }
+    
+
+    private void handleEncryptedNoteSelection(EncryptedNote encryptedNote) {
+        TextInputDialog passwordDialog = new TextInputDialog();
+        passwordDialog.setTitle("Nota Criptografada");
+        passwordDialog.setHeaderText("Digite a senha para visualizar o conteúdo:");
+        passwordDialog.setContentText("Senha:");
+
+        passwordDialog.showAndWait().ifPresent(password -> {
+            try {
+                String content = encryptedNote.desencriptar(password);
+                textArea.setText(content);
+                textArea.setDisable(false); // Enable editing when the password is correct
+            } catch (wrongPasswordException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Erro");
+                alert.setHeaderText("Senha incorreta");
+                alert.setContentText("A senha que você digitou está incorreta. Tente novamente.");
+                alert.showAndWait();
+            }
+        });
+    }
+    
+  
 
     private void showContextMenu(ContextMenuEvent event) {
         treeView.setContextMenu(null);
-
+    
         TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
-        if (selectedItem != null) {
+        if (selectedItem != null && selectedItem instanceof CustomTreeItem) {
+            CustomTreeItem<String> customSelectedItem = (CustomTreeItem<String>) selectedItem;
+            Document document = customSelectedItem.getDocument();
             ContextMenu contextMenu = new ContextMenu();
             MenuItem createNoteItem = new MenuItem("Criar Nota");
             MenuItem createEncryptedNoteItem = new MenuItem("Criar Nota Criptografada");
-            createNoteItem.setOnAction(e -> createNoteForDocument(selectedItem));
-            createEncryptedNoteItem.setOnAction(e -> createEncryptedNoteForDocument(selectedItem));
+            createNoteItem.setOnAction(e -> createNoteForDocument(customSelectedItem));
+            createEncryptedNoteItem.setOnAction(e -> createEncryptedNoteForDocument(customSelectedItem));
             contextMenu.getItems().addAll(createNoteItem, createEncryptedNoteItem);
-
+    
             MenuItem deleteItem = new MenuItem("Eliminar");
             deleteItem.setOnAction(e -> deleteItem(selectedItem));
             contextMenu.getItems().add(deleteItem);
-
+    
             treeView.setContextMenu(contextMenu);
             contextMenu.show(treeView, event.getScreenX(), event.getScreenY());
         }
     }
+    
 
-    private void createNoteForDocument(TreeItem<String> documentItem) {
+    private void createNoteForDocument(CustomTreeItem<String> documentItem) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Criar Nota");
         dialog.setHeaderText("Nome da nova nota:");
         dialog.setContentText("Nome:");
-
+    
         dialog.showAndWait().ifPresent(name -> {
             int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
-
+    
             // Retrieve the associated document
-            CustomTreeItem<String> docItem = (CustomTreeItem<String>) documentItem;
-            Document document = docItem.getDocument();
-
+            Document document = documentItem.getDocument();
+    
             // Create and associate the note with the document
             Note newNote = new Note(noteId, name, "Conteúdo da nota " + name, document);
             noteList.add(newNote);
-            documentItem.getChildren().add(new TreeItem<>("[N] " + name));
-            System.out.println("Creating note for document: " + document.getTitle() + " (ID: " + document.getId() + ")");
-
+            documentItem.getChildren().add(new CustomTreeItem<>("[N] " + name, newNote));
         });
     }
-
-    private void createEncryptedNoteForDocument(TreeItem<String> documentItem) {
+    
+    private void createEncryptedNoteForDocument(CustomTreeItem<String> documentItem) {
         TextInputDialog passwordDialog = new TextInputDialog();
         passwordDialog.setTitle("Criar Nota Criptografada");
         passwordDialog.setHeaderText("Digite a senha para a nova nota criptografada:");
         passwordDialog.setContentText("Senha:");
-
+    
         passwordDialog.showAndWait().ifPresent(password -> {
             TextInputDialog noteNameDialog = new TextInputDialog();
             noteNameDialog.setTitle("Criar Nota Criptografada");
             noteNameDialog.setHeaderText("Nome da nova nota criptografada:");
             noteNameDialog.setContentText("Nome:");
-
+    
             noteNameDialog.showAndWait().ifPresent(name -> {
                 int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
-
+    
                 // Retrieve the associated document
-                CustomTreeItem<String> docItem = (CustomTreeItem<String>) documentItem;
-                Document document = docItem.getDocument();
-
+                Document document = documentItem.getDocument();
+    
                 // Create and associate the encrypted note with the document
                 EncryptedNote newEncryptedNote = new EncryptedNote(noteId, name, "Conteúdo da nota " + name, document, password);
                 encryptedNoteList.add(newEncryptedNote);
-                documentItem.getChildren().add(new TreeItem<>("[*N] " + name));
+                documentItem.getChildren().add(new CustomTreeItem<>("[*N] " + name, newEncryptedNote));
             });
         });
     }
+    
 
     private void deleteItem(TreeItem<String> item) {
         if (item.getParent() != null) {
