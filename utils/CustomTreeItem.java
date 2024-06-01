@@ -1,16 +1,21 @@
 package utils;
 
+import documentManager.Document;
 import javafx.scene.control.TreeItem;
 
-public class CustomTreeItem<T> extends TreeItem<String> {
-    private T associatedDocument;
+public class CustomTreeItem<T> extends TreeItem<T> {
+    private Document document;
 
-    public CustomTreeItem(String value, T associatedDocument) {
+    public CustomTreeItem(T value, Document document) {
         super(value);
-        this.associatedDocument = associatedDocument;
+        this.document = document;
     }
 
-    public T getAssociatedDocument() {
-        return associatedDocument;
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 }
