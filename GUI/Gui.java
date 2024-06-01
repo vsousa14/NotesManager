@@ -39,36 +39,14 @@ public class Gui extends Application {
             System.out.println("ITEM SELECIONADO -> " + selectedItem);
             if (selectedItem != null && selectedItem instanceof CustomTreeItem) {
                 CustomTreeItem<String> treeItem = (CustomTreeItem<String>) selectedItem;
-                Document parentDocument = treeItem.getDocument();
-                System.out.println(parentDocument);
-        
-                if (selectedItem.getValue().startsWith("[D]")) {
-                    // Se for um documento
-                    Document document = treeItem.getDocument();
+                Document document = treeItem.getDocument();
+                
+                if (document != null) {
                     document.setContent(textArea.getText());
                     treeItem.setDocument(document);
+                    System.out.println("Conteúdo atualizado para o item selecionado.");
                 } else {
-                    // Se for uma nota ou nota criptografada
-                    String itemName = selectedItem.getValue();
-        
-                    if (itemName.startsWith("[N]")) {
-                        // Se for uma nota
-                        for (Note note : noteList) {
-                            
-                            if (note.getDocument().getId() == parentDocument.getId() && note.getTitle().equals(itemName.substring(4).trim())) {
-                                note.setContent(textArea.getText());
-                                break;
-                            }
-                        }
-                    } else if (itemName.startsWith("[*N]")) {
-                        // Se for uma nota criptografada
-                        for (EncryptedNote encryptedNote : encryptedNoteList) {
-                            if (encryptedNote.getDocument().getId() == parentDocument.getId() && encryptedNote.getTitle().equals(itemName.substring(5).trim())) {
-                                encryptedNote.setContent(textArea.getText());
-                                break;
-                            }
-                        }
-                    }
+                    System.out.println("Erro: Documento não encontrado.");
                 }
             }
         });
