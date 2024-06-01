@@ -88,7 +88,7 @@ public class Gui extends Application {
     private HBox createSearchBar() {
         HBox hbox = new HBox();
         searchField = new TextField();
-        searchField.setPromptText("Filtrar por categoria");
+        searchField.setPromptText("Filtrar por titulo");
         Button createButton = new Button("Criar");
 
         createButton.setOnAction(e -> createNewDocument());
@@ -101,8 +101,60 @@ public class Gui extends Application {
     }
 
     private void filterTreeView(String filter) {
-        // Implement your filtering logic here
+        TreeItem<String> root = treeView.getRoot();
+        if (filter == null || filter.isEmpty()) {
+            restoreTreeItems(root);
+        } else {
+            applyFilter(root, filter.toLowerCase());
+        }
     }
+    
+    private void restoreTreeItems(TreeItem<String> root) {
+        root.getChildren().clear();
+        for (Document document : documentManager.getDocuments().values()) {
+            CustomTreeItem<String> documentItem = new CustomTreeItem<>("[D] " + document.getTitle(), document);
+            root.getChildren().add(documentItem);
+            for (Note note : noteList) {
+                if (note.getDocument().getId() == document.getId()) {
+                    documentItem.getChildren().add(new CustomTreeItem<>("[N] " + note.getTitle(), note));
+                }
+            }
+            for (EncryptedNote encryptedNote : encryptedNoteList) {
+                if (encryptedNote.getDocument().getId() == document.getId()) {
+                    documentItem.getChildren().add(new CustomTreeItem<>("[*N] " + encryptedNote.getTitle(), encryptedNote));
+                }
+            }
+        }
+    }
+    
+    private void applyFilter(TreeItem<String> root, String filter) {
+        root.getChildren().clear();
+        for (Document document : documentManager.getDocuments().values()) {
+            if (document.getTitle().toLowerCase().contains(filter)) {
+                CustomTreeItem<String> documentItem = new CustomTreeItem<>("[D] " + document.getTitle(), document);
+                root.getChildren().add(documentItem);
+            } else {
+                CustomTreeItem<String> documentItem = new CustomTreeItem<>("[D] " + document.getTitle(), document);
+                boolean hasMatchingChild = false;
+                for (Note note : noteList) {
+                    if (note.getDocument().getId() == document.getId() && note.getTitle().toLowerCase().contains(filter)) {
+                        documentItem.getChildren().add(new CustomTreeItem<>("[N] " + note.getTitle(), note));
+                        hasMatchingChild = true;
+                    }
+                }
+                for (EncryptedNote encryptedNote : encryptedNoteList) {
+                    if (encryptedNote.getDocument().getId() == document.getId() && encryptedNote.getTitle().toLowerCase().contains(filter)) {
+                        documentItem.getChildren().add(new CustomTreeItem<>("[*N] " + encryptedNote.getTitle(), encryptedNote));
+                        hasMatchingChild = true;
+                    }
+                }
+                if (hasMatchingChild) {
+                    root.getChildren().add(documentItem);
+                }
+            }
+        }
+    }
+    
 
     private void createNewDocument() {
         TextInputDialog dialog = new TextInputDialog();
