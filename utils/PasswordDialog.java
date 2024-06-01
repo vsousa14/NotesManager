@@ -12,15 +12,15 @@ import javafx.scene.layout.Priority;
 public class PasswordDialog extends Dialog<String> {
   private PasswordField passwordField;
 
-  public PasswordDialog() {
-    setTitle("Proteção");
-    setHeaderText("Por favor coloque a senha.");
+  public PasswordDialog(String Title, String HeaderText, String passwordText) {
+    setTitle(Title);
+    setHeaderText(HeaderText);
 
     ButtonType passwordButtonType = new ButtonType("Ok", ButtonData.OK_DONE);
     getDialogPane().getButtonTypes().addAll(passwordButtonType, ButtonType.CANCEL);
 
     passwordField = new PasswordField();
-    passwordField.setPromptText("Senha");
+    passwordField.setPromptText(passwordText);
 
     HBox hBox = new HBox();
     hBox.getChildren().add(passwordField);

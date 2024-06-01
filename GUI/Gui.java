@@ -12,6 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import utils.CustomTreeItem;
+import utils.LanguageManager;
 import utils.PasswordDialog;
 
 import java.util.ArrayList;
@@ -29,11 +30,12 @@ public class Gui extends Application {
     public void start(Stage primaryStage) {
         SplitPane splitPane = new SplitPane();
         documentManager = new DocumentManager();
+        LanguageManager.loadLanguage("en_us");
 
         treeView = createTreeView();
         ToolBar toolBar = createToolBar();
         textArea = new TextArea();
-        textArea.setText("Bem-vindo ao Notes Manager! Selecione ou crie um documento para começar.");
+        textArea.setText(LanguageManager.get("welcome"));
         textArea.setDisable(true);  // Initially, disable the text area for homepage view
 
         textArea.setOnKeyReleased(event -> {
@@ -90,8 +92,8 @@ public class Gui extends Application {
     private HBox createSearchBar() {
         HBox hbox = new HBox();
         searchField = new TextField();
-        searchField.setPromptText("Filtrar por titulo");
-        Button createButton = new Button("Criar");
+        searchField.setPromptText(LanguageManager.get("filterby"));
+        Button createButton = new Button(LanguageManager.get("create"));
 
         createButton.setOnAction(e -> createNewDocument());
 
@@ -160,13 +162,13 @@ public class Gui extends Application {
 
     private void createNewDocument() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Criar Documento");
-        dialog.setHeaderText("Nome do novo documento:");
-        dialog.setContentText("Nome:");
+        dialog.setTitle(LanguageManager.get("createDocument"));
+        dialog.setHeaderText(LanguageManager.get("documentName"));
+        dialog.setContentText(LanguageManager.get("name"));
 
         dialog.showAndWait().ifPresent(name -> {
             int documentId = documentManager.getDocuments().size() + 1; // Generate new ID
-            Document newDocument = new Document(documentId, name, "Conteúdo do documento " + name);
+            Document newDocument = new Document(documentId, name, LanguageManager.get("documentContent")+" "+ name);
             documentManager.addDocument(newDocument);
 
             CustomTreeItem<String> newDocumentItem = new CustomTreeItem<>("[D] " + name, newDocument);
@@ -176,7 +178,7 @@ public class Gui extends Application {
 
     private void showHomepage() {
         treeView.getSelectionModel().clearSelection();
-        textArea.setText("Bem-vindo ao Notes Manager! Selecione ou crie um documento para começar.");
+        textArea.setText(LanguageManager.get("welcome"));
         textArea.setDisable(true); // Disable editing in homepage view
     }
 
@@ -215,7 +217,7 @@ public class Gui extends Application {
     
 
     private void handleEncryptedNoteSelection(EncryptedNote encryptedNote) {
-        PasswordDialog passwordDialog = new PasswordDialog();
+        PasswordDialog passwordDialog = new PasswordDialog(LanguageManager.get("EncryptedDialogText"),LanguageManager.get("EncryptedDialogHeader"),LanguageManager.get("EncryptedPassField"));
         Optional<String> result = passwordDialog.showAndWait();
 
         result.ifPresent(password -> {
@@ -226,8 +228,8 @@ public class Gui extends Application {
             } catch (wrongPasswordException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Erro");
-                alert.setHeaderText("Senha incorreta");
-                alert.setContentText("A senha que você digitou está incorreta. Tente novamente.");
+                alert.setHeaderText(LanguageManager.get("wrongPassword"));
+                alert.setContentText(LanguageManager.get("wrongPasswordDesc"));
                 alert.showAndWait();
             }
         });
@@ -243,13 +245,13 @@ public class Gui extends Application {
             CustomTreeItem<String> customSelectedItem = (CustomTreeItem<String>) selectedItem;
             Document document = customSelectedItem.getDocument();
             ContextMenu contextMenu = new ContextMenu();
-            MenuItem createNoteItem = new MenuItem("Criar Nota");
-            MenuItem createEncryptedNoteItem = new MenuItem("Criar Nota Criptografada");
+            MenuItem createNoteItem = new MenuItem(LanguageManager.get("createNote"));
+            MenuItem createEncryptedNoteItem = new MenuItem(LanguageManager.get("createEncryptedNote"));
             createNoteItem.setOnAction(e -> createNoteForDocument(customSelectedItem));
             createEncryptedNoteItem.setOnAction(e -> createEncryptedNoteForDocument(customSelectedItem));
             contextMenu.getItems().addAll(createNoteItem, createEncryptedNoteItem);
     
-            MenuItem deleteItem = new MenuItem("Eliminar");
+            MenuItem deleteItem = new MenuItem(LanguageManager.get("delete"));
             deleteItem.setOnAction(e -> deleteItem(selectedItem));
             contextMenu.getItems().add(deleteItem);
     
@@ -261,9 +263,9 @@ public class Gui extends Application {
 
     private void createNoteForDocument(CustomTreeItem<String> documentItem) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Criar Nota");
-        dialog.setHeaderText("Nome da nova nota:");
-        dialog.setContentText("Nome:");
+        dialog.setTitle(LanguageManager.get("createNote"));
+        dialog.setHeaderText(LanguageManager.get("noteName"));
+        dialog.setContentText(LanguageManager.get("name"));
     
         dialog.showAndWait().ifPresent(name -> {
             int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
@@ -272,21 +274,21 @@ public class Gui extends Application {
             Document document = documentItem.getDocument();
     
             // Create and associate the note with the document
-            Note newNote = new Note(noteId, name, "Conteúdo da nota " + name, document);
+            Note newNote = new Note(noteId, name, LanguageManager.get("noteContent")+" " + name, document);
             noteList.add(newNote);
             documentItem.getChildren().add(new CustomTreeItem<>("[N] " + name, newNote));
         });
     }
     
     private void createEncryptedNoteForDocument(CustomTreeItem<String> documentItem) {
-        PasswordDialog passwordDialog = new PasswordDialog();
+        PasswordDialog passwordDialog = new PasswordDialog(LanguageManager.get("EncryptedDialogText"),LanguageManager.get("EncryptedDialogHeader"),LanguageManager.get("EncryptedPassField"));
         Optional<String> result = passwordDialog.showAndWait();
 
             result.ifPresent(password -> {
             TextInputDialog noteNameDialog = new TextInputDialog();
-            noteNameDialog.setTitle("Criar Nota Criptografada");
-            noteNameDialog.setHeaderText("Nome da nova nota criptografada:");
-            noteNameDialog.setContentText("Nome:");
+            noteNameDialog.setTitle(LanguageManager.get("createEncryptedNote"));
+            noteNameDialog.setHeaderText(LanguageManager.get("encryptedNoteName"));
+            noteNameDialog.setContentText(LanguageManager.get("name"));
     
             noteNameDialog.showAndWait().ifPresent(name -> {
                 int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
@@ -295,7 +297,7 @@ public class Gui extends Application {
                 Document document = documentItem.getDocument();
     
                 // Create and associate the encrypted note with the document
-                EncryptedNote newEncryptedNote = new EncryptedNote(noteId, name, "Conteúdo da nota " + name, document, password);
+                EncryptedNote newEncryptedNote = new EncryptedNote(noteId, name, LanguageManager.get("noteContent")+" " + name, document, password);
                 encryptedNoteList.add(newEncryptedNote);
                 documentItem.getChildren().add(new CustomTreeItem<>("[*N] " + name, newEncryptedNote));
             });
