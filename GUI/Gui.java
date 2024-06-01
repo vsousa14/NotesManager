@@ -12,8 +12,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import utils.CustomTreeItem;
+import utils.PasswordDialog;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Gui extends Application {
     private TextArea textArea;
@@ -213,12 +215,10 @@ public class Gui extends Application {
     
 
     private void handleEncryptedNoteSelection(EncryptedNote encryptedNote) {
-        TextInputDialog passwordDialog = new TextInputDialog();
-        passwordDialog.setTitle("Nota Criptografada");
-        passwordDialog.setHeaderText("Digite a senha para visualizar o conteúdo:");
-        passwordDialog.setContentText("Senha:");
+        PasswordDialog passwordDialog = new PasswordDialog();
+        Optional<String> result = passwordDialog.showAndWait();
 
-        passwordDialog.showAndWait().ifPresent(password -> {
+        result.ifPresent(password -> {
             try {
                 String content = encryptedNote.desencriptar(password);
                 textArea.setText(content);
@@ -279,12 +279,10 @@ public class Gui extends Application {
     }
     
     private void createEncryptedNoteForDocument(CustomTreeItem<String> documentItem) {
-        TextInputDialog passwordDialog = new TextInputDialog();
-        passwordDialog.setTitle("Criar Nota Criptografada");
-        passwordDialog.setHeaderText("Digite a senha para a nova nota criptografada:");
-        passwordDialog.setContentText("Senha:");
-    
-        passwordDialog.showAndWait().ifPresent(password -> {
+        PasswordDialog passwordDialog = new PasswordDialog();
+        Optional<String> result = passwordDialog.showAndWait();
+
+            result.ifPresent(password -> {
             TextInputDialog noteNameDialog = new TextInputDialog();
             noteNameDialog.setTitle("Criar Nota Criptografada");
             noteNameDialog.setHeaderText("Nome da nova nota criptografada:");
