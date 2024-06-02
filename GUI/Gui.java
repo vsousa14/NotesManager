@@ -40,7 +40,6 @@ public class Gui extends Application {
             documentManager = new DocumentManager();
         }
 
-        // Carregar notas e notas encriptadas se forem serializáveis
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("notes.ser"))) {
             noteList = (ArrayList<Note>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
@@ -87,7 +86,6 @@ public class Gui extends Application {
 
         leftPane.setOnMouseClicked(event -> {
             if (treeView.getSelectionModel().getSelectedItem() != null) {
-                // Verifica se o clique foi fora da TreeView
                 treeView.getSelectionModel().clearSelection();
             }
         });
@@ -201,7 +199,7 @@ public class Gui extends Application {
     private void showHomepage() {
         treeView.getSelectionModel().clearSelection();
         textArea.setText(LanguageManager.get("welcome"));
-        textArea.setDisable(true); // Disable editing in homepage view
+        textArea.setDisable(true);
     }
 
     private TreeView<String> createTreeView() {
@@ -220,14 +218,12 @@ public class Gui extends Application {
                     handleEncryptedNoteSelection((EncryptedNote) doc);
                 } else if (doc instanceof Note) {
                     // Handle regular note selection
-                    System.out.println("NOTA SELECIONADA");
                     textArea.setText(doc.getContent());
-                    textArea.setDisable(false); // Enable editing when a note or document is selected
+                    textArea.setDisable(false); 
                 } else {
                     // Handle document selection
-                    System.out.println("DOCUMENTO SELECIONADO");
                     textArea.setText(doc.getContent());
-                    textArea.setDisable(false); // Enable editing when a note or document is selected
+                    textArea.setDisable(false); 
                 }
             }
         });
@@ -248,7 +244,7 @@ public class Gui extends Application {
             try {
                 String content = encryptedNote.desencriptar(password);
                 textArea.setText(content);
-                textArea.setDisable(false); // Enable editing when the password is correct
+                textArea.setDisable(false);
             } catch (wrongPasswordException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Erro");
@@ -289,7 +285,7 @@ public class Gui extends Application {
         dialog.setContentText(LanguageManager.get("name"));
 
         dialog.showAndWait().ifPresent(name -> {
-            int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
+            int noteId = (int) (Math.random() * 8000) + 1;
 
             // Retrieve the associated document
             Document document = documentItem.getDocument();
@@ -312,7 +308,7 @@ public class Gui extends Application {
             noteNameDialog.setContentText(LanguageManager.get("name"));
 
             noteNameDialog.showAndWait().ifPresent(name -> {
-                int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
+                int noteId = (int) (Math.random() * 8000) + 1;
 
                 // Retrieve the associated document
                 Document document = documentItem.getDocument();
