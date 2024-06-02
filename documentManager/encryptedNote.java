@@ -1,8 +1,11 @@
 package documentManager;
 
+import java.io.Serializable;
+
 import exceptions.wrongPasswordException;
 
-public class EncryptedNote extends Note {
+public class EncryptedNote extends Note implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String _password;
 
     public EncryptedNote(int id,String title, String content, Document document, String password) {

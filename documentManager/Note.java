@@ -1,7 +1,10 @@
 package documentManager;
 
-public class Note extends Document {
+import java.io.Serializable;
+
+public class Note extends Document  implements Serializable {
     private Document _document;
+    private static final long serialVersionUID = 1L;
 
     public Note(int id,String title, String content, Document document) {
         super(id,title, content);
@@ -24,9 +27,7 @@ public class Note extends Document {
         return _document;
     }
 
-    public void setNoteTitle(String title) {
-        setTitle(title);
-    }
+   
 
     public void setNoteContent(String content) {
         setContent(content);

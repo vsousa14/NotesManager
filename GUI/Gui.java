@@ -15,6 +15,11 @@ import utils.CustomTreeItem;
 import utils.LanguageManager;
 import utils.PasswordDialog;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -29,7 +34,25 @@ public class Gui extends Application {
     @Override
     public void start(Stage primaryStage) {
         SplitPane splitPane = new SplitPane();
-        documentManager = new DocumentManager();
+        try {
+            documentManager = DocumentManager.loadData("data.ser");
+        } catch (IOException | ClassNotFoundException e) {
+            documentManager = new DocumentManager();
+        }
+
+        // Carregar notas e notas encriptadas se forem serializáveis
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("notes.ser"))) {
+            noteList = (ArrayList<Note>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            noteList = new ArrayList<>();
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("encryptedNotes.ser"))) {
+            encryptedNoteList = (ArrayList<EncryptedNote>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            encryptedNoteList = new ArrayList<>();
+        }
+
         LanguageManager.loadLanguage("en_us");
 
         treeView = createTreeView();
@@ -37,24 +60,19 @@ public class Gui extends Application {
         textArea = new TextArea();
         textArea.setText(LanguageManager.get("welcome"));
         textArea.setDisable(true);  // Initially, disable the text area for homepage view
-
         textArea.setOnKeyReleased(event -> {
             TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
-            System.out.println("ITEM SELECIONADO -> " + selectedItem);
             if (selectedItem != null && selectedItem instanceof CustomTreeItem) {
                 CustomTreeItem<String> treeItem = (CustomTreeItem<String>) selectedItem;
                 Document document = treeItem.getDocument();
-                
+
                 if (document != null) {
                     document.setContent(textArea.getText());
                     treeItem.setDocument(document);
-                    System.out.println("Conteúdo atualizado para o item selecionado.");
-                } else {
-                    System.out.println("Erro: Documento não encontrado.");
                 }
             }
         });
-        
+
         VBox rightPane = new VBox(toolBar, textArea);
         rightPane.setVgrow(textArea, Priority.ALWAYS);
 
@@ -73,6 +91,11 @@ public class Gui extends Application {
                 treeView.getSelectionModel().clearSelection();
             }
         });
+    }
+
+    @Override
+    public void stop() {
+        saveData();
     }
 
     private VBox createHomepageButton() {
@@ -158,7 +181,6 @@ public class Gui extends Application {
             }
         }
     }
-    
 
     private void createNewDocument() {
         TextInputDialog dialog = new TextInputDialog();
@@ -212,9 +234,11 @@ public class Gui extends Application {
     
         treeView.setOnContextMenuRequested(this::showContextMenu);
     
+        // Populate the tree view with documents and notes
+        restoreTreeItems(rootItem);
+    
         return treeView;
     }
-    
 
     private void handleEncryptedNoteSelection(EncryptedNote encryptedNote) {
         PasswordDialog passwordDialog = new PasswordDialog(LanguageManager.get("EncryptedDialogText"),LanguageManager.get("EncryptedDialogHeader"),LanguageManager.get("EncryptedPassField"));
@@ -234,12 +258,10 @@ public class Gui extends Application {
             }
         });
     }
-    
-  
 
     private void showContextMenu(ContextMenuEvent event) {
         treeView.setContextMenu(null);
-    
+
         TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem instanceof CustomTreeItem) {
             CustomTreeItem<String> customSelectedItem = (CustomTreeItem<String>) selectedItem;
@@ -250,52 +272,51 @@ public class Gui extends Application {
             createNoteItem.setOnAction(e -> createNoteForDocument(customSelectedItem));
             createEncryptedNoteItem.setOnAction(e -> createEncryptedNoteForDocument(customSelectedItem));
             contextMenu.getItems().addAll(createNoteItem, createEncryptedNoteItem);
-    
+
             MenuItem deleteItem = new MenuItem(LanguageManager.get("delete"));
             deleteItem.setOnAction(e -> deleteItem(selectedItem));
             contextMenu.getItems().add(deleteItem);
-    
+
             treeView.setContextMenu(contextMenu);
             contextMenu.show(treeView, event.getScreenX(), event.getScreenY());
         }
     }
-    
 
     private void createNoteForDocument(CustomTreeItem<String> documentItem) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle(LanguageManager.get("createNote"));
         dialog.setHeaderText(LanguageManager.get("noteName"));
         dialog.setContentText(LanguageManager.get("name"));
-    
+
         dialog.showAndWait().ifPresent(name -> {
             int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
-    
+
             // Retrieve the associated document
             Document document = documentItem.getDocument();
-    
+
             // Create and associate the note with the document
             Note newNote = new Note(noteId, name, LanguageManager.get("noteContent")+" " + name, document);
             noteList.add(newNote);
             documentItem.getChildren().add(new CustomTreeItem<>("[N] " + name, newNote));
         });
     }
-    
+
     private void createEncryptedNoteForDocument(CustomTreeItem<String> documentItem) {
         PasswordDialog passwordDialog = new PasswordDialog(LanguageManager.get("EncryptedDialogText"),LanguageManager.get("EncryptedDialogHeader"),LanguageManager.get("EncryptedPassField"));
         Optional<String> result = passwordDialog.showAndWait();
 
-            result.ifPresent(password -> {
+        result.ifPresent(password -> {
             TextInputDialog noteNameDialog = new TextInputDialog();
             noteNameDialog.setTitle(LanguageManager.get("createEncryptedNote"));
             noteNameDialog.setHeaderText(LanguageManager.get("encryptedNoteName"));
             noteNameDialog.setContentText(LanguageManager.get("name"));
-    
+
             noteNameDialog.showAndWait().ifPresent(name -> {
                 int noteId = (int) (Math.random() * 8000) + 1; // Generate new ID
-    
+
                 // Retrieve the associated document
                 Document document = documentItem.getDocument();
-    
+
                 // Create and associate the encrypted note with the document
                 EncryptedNote newEncryptedNote = new EncryptedNote(noteId, name, LanguageManager.get("noteContent")+" " + name, document, password);
                 encryptedNoteList.add(newEncryptedNote);
@@ -303,14 +324,45 @@ public class Gui extends Application {
             });
         });
     }
-    
 
     private void deleteItem(TreeItem<String> item) {
         if (item.getParent() != null) {
+            CustomTreeItem<String> customItem = (CustomTreeItem<String>) item;
+            Document document = customItem.getDocument();
+
+            // Remove document or note from the respective list
+            if (document instanceof Document) {
+                documentManager.removeDocument(document.getId());
+            } else if (document instanceof Note) {
+                noteList.remove(document);
+            } else if (document instanceof EncryptedNote) {
+                encryptedNoteList.remove(document);
+            }
+
             item.getParent().getChildren().remove(item);
             if (treeView.getRoot().getChildren().isEmpty()) {
                 showHomepage();
             }
+
+            // Save the updated lists to the respective files
+            saveData();
+        }
+    }
+
+    private void saveData() {
+        try {
+            documentManager.saveData("data.ser");
+
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("notes.ser"))) {
+                oos.writeObject(noteList);
+            }
+
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("encryptedNotes.ser"))) {
+                oos.writeObject(encryptedNoteList);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

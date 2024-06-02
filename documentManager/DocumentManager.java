@@ -1,9 +1,16 @@
 package documentManager;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DocumentManager {
+public class DocumentManager implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Map<Integer, Document> _documents;
 
     public DocumentManager() {
@@ -30,6 +37,18 @@ public class DocumentManager {
         Document doc = _documents.get(id);
         if (doc != null) {
             doc.setContent(newContent);
+        }
+    }
+    
+    public void saveData(String fileName) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            oos.writeObject(this);
+        }
+    }
+
+    public static DocumentManager loadData(String fileName) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
+            return (DocumentManager) ois.readObject();
         }
     }
 }
