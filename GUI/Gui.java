@@ -325,21 +325,23 @@ public class Gui extends Application {
         if (item.getParent() != null) {
             CustomTreeItem<String> customItem = (CustomTreeItem<String>) item;
             Document document = customItem.getDocument();
-
+    
             // Remove document or note from the respective list
-            if (document instanceof Document) {
-                documentManager.removeDocument(document.getId());
-            } else if (document instanceof Note) {
+            if (document instanceof Note) {
                 noteList.remove(document);
             } else if (document instanceof EncryptedNote) {
                 encryptedNoteList.remove(document);
+            } else if (document instanceof Document) {
+                documentManager.removeDocument(document.getId());
+                noteList.removeIf(note -> note.getDocument().getId() == document.getId());
+                encryptedNoteList.removeIf(encryptedNote -> encryptedNote.getDocument().getId() == document.getId());
             }
-
+    
             item.getParent().getChildren().remove(item);
             if (treeView.getRoot().getChildren().isEmpty()) {
                 showHomepage();
             }
-
+    
             // Save the updated lists to the respective files
             saveData();
         }
